@@ -1,11 +1,11 @@
 #include <FastLED.h>
+#include "pov.h"
 
 #if FASTLED_VERSION < 3001000
 #error "Requires" FastLED 3.1 or later: check github for latest code."
 #endif
 
-#define NUM_LEDS 24
-#define SCAN_RESOLUTION 32
+
 #define DATA_PIN 7
 #define CLOCK_PIN 13
 #define RENDERING_DELAY 4
@@ -33,50 +33,12 @@ void renderBackwardRastr();
 CRGB leds[NUM_LEDS];
 void turnOffAllLeds();
 
-const int disp[SCAN_RESOLUTION][NUM_LEDS] = {
-  
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 8, 4,   4, 4, 8, 8,   0, 0, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 8, 8, 8,   8, 8, 8, 8,   8, 8, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 8, 7, 7,   4, 4, 4, 8,   3, 8, 8, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 8, 7, 0,   0, 0, 0, 0,   4, 3, 8, 8,   7, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 7,   8, 7, 0, 0,   0, 0, 4, 0,   0, 4, 3, 8,   8, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 7,   8, 0, 0, 8,   0, 4, 4, 0,   0, 0, 3, 8,   8, 7, 0, 0},
-
-    {0, 0, 0, 0,   0, 0, 0, 7,   8, 0, 0, 8,   8, 4, 4, 8,   0, 0, 0, 4,   8, 7, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 7,   8, 0, 0, 0,   8, 4, 8, 8,   8, 0, 3, 4,   8, 7, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 4,   4, 0, 0, 0,   4, 4, 0, 8,   0, 0, 3, 4,   7, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 4,   4, 8, 0, 0,   0, 4, 0, 0,   3, 3, 4, 8,   7, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   4, 4, 7, 0,   0, 0, 0, 0,   4, 8, 8, 7,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 4, 7, 7,   0, 0, 0, 7,   8, 8, 7, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 4, 4, 7,   3, 7, 7, 8,   7, 7, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 4, 3,   8, 8, 8, 7,   0, 0, 0, 0,   0, 0, 0, 0},
-
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 3, 8,   8, 4, 7, 7,   7, 0, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 3, 8, 8,   7, 0, 4, 4,   7, 7, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   3, 3, 8, 7,   0, 0, 0, 4,   4, 7, 7, 8,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   3, 8, 8, 7,   0, 0, 0, 0,   0, 0, 7, 7,   8, 4, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   3, 8, 7, 0,   0, 0, 0, 0,   0, 0, 0, 7,   8, 3, 4, 0},
-    {0, 0, 0, 0,   0, 0, 0, 3,   7, 8, 7, 0,   0, 0, 0, 0,   0, 0, 0, 0,   7, 3, 4, 0},
-    {0, 0, 0, 0,   0, 0, 0, 3,   8, 8, 7, 0,   0, 0, 0, 0,   0, 0, 0, 0,   8, 3, 4, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   8, 8, 7, 0,   0, 0, 0, 0,   0, 0, 0, 0,   8, 3, 0, 0},
-
-    {0, 0, 0, 0,   0, 0, 0, 0,   8, 8, 7, 0,   0, 0, 0, 0,   0, 0, 0, 8,   8, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   8, 7, 7, 7,   0, 0, 0, 0,   0, 0, 7, 4,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 4, 4, 7,   7, 0, 0, 7,   7, 7, 4, 4,   4, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 4, 4, 8,   8, 7, 8, 8,   8, 8, 4, 4,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 4, 4,   7, 7, 7, 7,   4, 4, 3, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 3,   4, 4, 4, 4,   3, 3, 3, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   3, 3, 3, 3,   0, 0, 0, 0,   0, 0, 0, 0},
-    {0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0,   0, 0, 0, 0},
-    
-};
 
 void setup() { 
        pinMode(forwardLEDPin, OUTPUT);
        pinMode(backwardLEDPin, OUTPUT);
   	   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+       //Serial.begin(115200);      // open the serial port at 9600 bps:
        turnOffAllLeds();
        for (int i=0; i<rateBufferSize; i++){
           averageRateBuffer[i]=0;
@@ -105,7 +67,7 @@ void loop() {
    
    if (angularRateSignPrevious != angularRateSign){
     angularRateSignPrevious = angularRateSign;
-    if (avarageRate < -20 ){
+    if (avarageRate < -20 ){ 
       renderForwardRastr();     
     } else if (avarageRate > 20 ) {   
       renderBackwardRastr();
@@ -122,11 +84,17 @@ void renderForwardRastr(){
   for (int scanStep=0; scanStep<SCAN_RESOLUTION; scanStep++){ 
       for (int ledPosition=0; ledPosition<NUM_LEDS; ledPosition++){
         switch(disp[scanStep][ledPosition]){
+          case 2:
+            leds[ledPosition] = CRGB::Red;
+            break;
           case 3:
             leds[ledPosition] = CRGB::Orange;
             break;
           case 4:
-            leds[ledPosition] = CRGB::Green;
+            leds[ledPosition] = CRGB::Yellow;
+            break;
+          case 5:
+            leds[ledPosition] = CRGB::Teal; //HEX #008081
             break;
           case 7:
             leds[ledPosition] = CRGB::Blue;
@@ -149,11 +117,17 @@ void renderBackwardRastr(){
   for (int scanStep=SCAN_RESOLUTION-1; scanStep>=0; scanStep--){ 
       for (int ledPosition=0; ledPosition<NUM_LEDS; ledPosition++){
         switch(disp[scanStep][ledPosition]){
+          case 2:
+            leds[ledPosition] = CRGB::Red;
+            break;
           case 3:
             leds[ledPosition] = CRGB::Orange;
             break;
           case 4:
-            leds[ledPosition] = CRGB::Green;
+            leds[ledPosition] = CRGB::Yellow;
+            break;
+          case 5:
+            leds[ledPosition] = CRGB::Teal; //HEX #008081
             break;
           case 7:
             leds[ledPosition] = CRGB::Blue;
